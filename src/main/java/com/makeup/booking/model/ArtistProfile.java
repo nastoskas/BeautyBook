@@ -28,4 +28,6 @@ public class ArtistProfile extends BaseEntity {
     private User user;
     @OneToMany(mappedBy = "artistProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkingSchedule> workingSchedules = new ArrayList<>();
+    @OneToMany(mappedBy = "artistProfile")
+    private List<Appointment> appointments = new ArrayList<>();
 }

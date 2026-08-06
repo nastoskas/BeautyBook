@@ -3,6 +3,7 @@ package com.makeup.booking.model;
 import com.makeup.booking.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,6 +28,7 @@ public class BeautyService extends BaseEntity {
     @NotBlank
     @Column(length = 1000)
     private String description;
+    @Column(nullable = false)
     @Positive(message = "Duration must be a greater than zero")
     private int duration; // in minutes
     @NotNull

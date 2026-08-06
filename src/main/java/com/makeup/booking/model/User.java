@@ -11,6 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -38,4 +41,6 @@ public class User extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+    @OneToMany(mappedBy = "client")
+    private List<Appointment> appointments = new ArrayList<>();
 }
