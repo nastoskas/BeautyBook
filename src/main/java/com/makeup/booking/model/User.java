@@ -43,4 +43,15 @@ public class User extends BaseEntity {
     private Role role;
     @OneToMany(mappedBy = "client")
     private List<Appointment> appointments = new ArrayList<>();
+
+    public User(String firstName, String lastName, String email, String password, String phoneNumber, String profileImage, boolean enabled, Role role) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.profileImage = profileImage;
+        this.enabled = enabled;
+        this.role = role;
+    }
 }
