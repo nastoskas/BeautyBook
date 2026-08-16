@@ -23,7 +23,7 @@ public class ArtistProfile extends BaseEntity {
     @NotBlank
     private String experience;
     private String instagram;
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
     @OneToMany(mappedBy = "artistProfile", cascade = CascadeType.ALL, orphanRemoval = true)

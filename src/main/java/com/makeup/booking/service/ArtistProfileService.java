@@ -8,4 +8,7 @@ public interface ArtistProfileService {
     ArtistProfile getById(Long id);
     List<ArtistProfile> findAll();
     ArtistProfile findByUserId(Long userId);
+    ArtistProfile create(Long userId, String biography, String experience, String instagram);
+    ArtistProfile update(Long id, String biography, String experience, String instagram);
+    void delete(Long id);
 }
