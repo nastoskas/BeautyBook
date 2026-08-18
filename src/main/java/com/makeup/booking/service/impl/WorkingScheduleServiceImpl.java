@@ -31,6 +31,11 @@ public class WorkingScheduleServiceImpl implements WorkingScheduleService {
     }
 
     @Override
+    public WorkingSchedule findActiveByArtistAndDay(Long artistProfileId, DayOfWeek day) {
+        return workingScheduleRepository.findByArtistProfileIdAndDayAndAvailableTrue(artistProfileId, day).orElseThrow(() -> new IllegalArgumentException("Artist does not work on this day"));
+    }
+
+    @Override
     public WorkingSchedule create(
             Long artistProfileId,
             DayOfWeek day,

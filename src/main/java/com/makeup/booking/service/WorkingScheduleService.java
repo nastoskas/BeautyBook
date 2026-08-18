@@ -9,6 +9,7 @@ import java.util.List;
 public interface WorkingScheduleService {
     WorkingSchedule getById(Long id);
     List<WorkingSchedule> findByArtist(Long artistProfileId);
+    WorkingSchedule findActiveByArtistAndDay(Long artistProfileId, DayOfWeek day);
     WorkingSchedule create(
             Long artistProfileId,
             DayOfWeek day,
