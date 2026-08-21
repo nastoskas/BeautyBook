@@ -7,12 +7,10 @@ import com.makeup.booking.model.exceptions.AppointmentNotFoundException;
 import com.makeup.booking.repository.AppointmentRepository;
 import com.makeup.booking.service.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
