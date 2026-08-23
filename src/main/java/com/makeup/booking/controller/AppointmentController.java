@@ -1,14 +1,14 @@
 package com.makeup.booking.controller;
 
 import com.makeup.booking.dto.appointment.AppointmentResponseDto;
+import com.makeup.booking.dto.appointment.CreateAppointmentDto;
 import com.makeup.booking.mapper.AppointmentMapper;
 import com.makeup.booking.model.Appointment;
 import com.makeup.booking.service.AppointmentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -25,5 +25,18 @@ public class AppointmentController {
         return appointmentMapper.toDto(appointment);
     }
 
-
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public AppointmentResponseDto createAppointment(@Valid @RequestBody CreateAppointmentDto dto){
+        Appointment appointment = appointmentService.create(
+                dto.getClientId(),
+                dto.getArtistId(),
+                dto.getDate(),
+                dto.getStartTime(),
+                dto.getBeautyServiceIds(),
+                dto.getImagePath(),
+                dto.getNotes()
+        );
+        return appointmentMapper.toDto(appointment);
+    }
 }

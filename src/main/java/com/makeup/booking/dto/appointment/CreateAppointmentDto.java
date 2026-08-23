@@ -17,6 +17,8 @@ public class CreateAppointmentDto {
     @NotNull
     private Long artistId;
     @NotNull
+    private Long clientId;
+    @NotNull
     private LocalDate date;
     @NotNull
     private LocalTime startTime;
