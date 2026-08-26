@@ -1,0 +1,7 @@
+PATCH http://localhost:8080/api/appointments/1/cancel
+Content-Type: application/json
+
+{
+
+}
+
