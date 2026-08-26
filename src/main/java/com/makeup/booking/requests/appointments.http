@@ -4,7 +4,7 @@ Content-Type: application/json
 {
   "clientId": 1,
   "artistId": 1,
-  "date": "2026-08-25",
-  "startTime": "14:00",
+  "date": "2026-09-07",
+  "startTime": "11:00",
   "beautyServiceIds": [1]
 }

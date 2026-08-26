@@ -128,6 +128,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setAppointmentStartTime(startTime);
         appointment.setAppointmentEndTime(endTime);
         appointment.setStatus(AppointmentStatus.PENDING);
+        appointment.setTotalDuration(totalDuration);
         appointment.setPrice(totalPrice);
         appointment.setNotes(notes);
         appointment.setBeautyServices(beautyServices);
