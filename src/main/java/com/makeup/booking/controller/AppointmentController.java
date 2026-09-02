@@ -2,6 +2,7 @@ package com.makeup.booking.controller;
 
 import com.makeup.booking.dto.appointment.AppointmentResponseDto;
 import com.makeup.booking.dto.appointment.CreateAppointmentDto;
+import com.makeup.booking.dto.appointment.RescheduleAppointmentDto;
 import com.makeup.booking.dto.appointment.UpdateAppointmentStatusDto;
 import com.makeup.booking.mapper.AppointmentMapper;
 import com.makeup.booking.model.Appointment;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -93,5 +95,10 @@ public class AppointmentController {
     public AppointmentResponseDto removeInspirationImage(@PathVariable Long id){
         appointmentService.removeInspirationImage(id);
         return appointmentMapper.toDto(appointmentService.getById(id));
+    }
+
+    @PatchMapping("/{id}/reschedule")
+    public AppointmentResponseDto reschedule(@PathVariable Long id, @Valid @RequestBody RescheduleAppointmentDto dto) {
+        return appointmentMapper.toDto(appointmentService.reschedule(id, dto.getNewDate(), dto.getNewStartTime()));
     }
 }
