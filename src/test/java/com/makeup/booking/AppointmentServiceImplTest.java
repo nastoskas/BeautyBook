@@ -1052,5 +1052,30 @@ public class AppointmentServiceImplTest {
 
         verify(appointmentRepository, never()).save(any(Appointment.class));
     }
+
+    @Test
+    void create_shouldRejectDuplicateBeautyServices() {
+        Long clientId = 1L;
+        Long artistProfileId = 1L;
+
+        LocalDate date = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(10, 0);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> appointmentService.create(
+                        clientId,
+                        artistProfileId,
+                        date,
+                        startTime,
+                        List.of(1L, 1L),
+                        null,
+                        null
+                )
+        );
+
+        verify(appointmentRepository, never())
+                .save(any(Appointment.class));
+    }
 }
 
