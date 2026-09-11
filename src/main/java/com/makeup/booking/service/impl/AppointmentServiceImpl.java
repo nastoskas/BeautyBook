@@ -60,6 +60,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (beautyServiceIds == null || beautyServiceIds.isEmpty()){
             throw new IllegalArgumentException("At least one beauty service is required");
         }
+        if (beautyServiceIds.size() != beautyServiceIds.stream().distinct().count()){
+            throw new IllegalArgumentException("Duplicate beauty services are not allowed");
+        }
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
         if (date.isBefore(today) || (date.isEqual(today) && startTime.isBefore(now))){
