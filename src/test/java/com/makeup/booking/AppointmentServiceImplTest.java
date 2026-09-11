@@ -468,5 +468,423 @@ public class AppointmentServiceImplTest {
 
         verify(appointmentRepository, never()).save(any(Appointment.class));
     }
+
+    @Test
+    void create_shouldAllowAppointmentEndingExactlyAtWorkingHoursEnd() {
+        Long clientId = 1L;
+        Long artistProfileId = 1L;
+
+        LocalDate date = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(14, 0);
+
+        User client = new User();
+        client.setId(clientId);
+        client.setRole(Role.CLIENT);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(artistProfileId);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(8, 0));
+        workingSchedule.setEndTime(LocalTime.of(15, 0));
+        workingSchedule.setAvailable(true);
+
+        BeautyService beautyService = new BeautyService();
+        beautyService.setId(1L);
+        beautyService.setDuration(60);
+        beautyService.setPrice(new BigDecimal("1500"));
+        beautyService.setActive(true);
+
+        when(userService.getById(clientId)).thenReturn(client);
+        when(artistProfileService.getById(artistProfileId)).thenReturn(artistProfile);
+        when(workingScheduleService.findActiveByArtistAndDay(artistProfileId, date.getDayOfWeek())).thenReturn(workingSchedule);
+        when(beautyServiceService.getById(1L)).thenReturn(beautyService);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(artistProfileId, date)).thenReturn(List.of());
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.create(
+                clientId,
+                artistProfileId,
+                date,
+                startTime,
+                List.of(1L),
+                null,
+                null
+        );
+
+        assertNotNull(result);
+        assertEquals(LocalTime.of(14, 0), result.getAppointmentStartTime());
+        assertEquals(LocalTime.of(15, 0), result.getAppointmentEndTime());
+
+        verify(appointmentRepository).save(any(Appointment.class));
+    }
+
+    @Test
+    void create_shouldAllowAppointmentStartingExactlyWhenExistingAppointmentEnds() {
+        Long clientId = 1L;
+        Long artistProfileId = 1L;
+
+        LocalDate date = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(11, 0);
+
+        User client = new User();
+        client.setId(clientId);
+        client.setRole(Role.CLIENT);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(artistProfileId);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(8, 0));
+        workingSchedule.setEndTime(LocalTime.of(15, 0));
+        workingSchedule.setAvailable(true);
+
+        BeautyService beautyService = new BeautyService();
+        beautyService.setId(1L);
+        beautyService.setDuration(60);
+        beautyService.setPrice(new BigDecimal("1500.00"));
+        beautyService.setActive(true);
+
+        Appointment existingAppointment = new Appointment();
+        existingAppointment.setAppointmentStartTime(LocalTime.of(10, 0));
+        existingAppointment.setAppointmentEndTime(LocalTime.of(11, 0));
+
+        when(userService.getById(clientId)).thenReturn(client);
+        when(artistProfileService.getById(artistProfileId)).thenReturn(artistProfile);
+        when(workingScheduleService.findActiveByArtistAndDay(artistProfileId, date.getDayOfWeek())).thenReturn(workingSchedule);
+        when(beautyServiceService.getById(1L)).thenReturn(beautyService);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(artistProfileId, date)).thenReturn(List.of(existingAppointment));
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.create(
+                clientId,
+                artistProfileId,
+                date,
+                startTime,
+                List.of(1L),
+                null,
+                null
+        );
+
+        assertNotNull(result);
+        assertEquals(LocalTime.of(11, 0), result.getAppointmentStartTime());
+        assertEquals(LocalTime.of(12, 0), result.getAppointmentEndTime());
+
+        verify(appointmentRepository).save(any(Appointment.class));
+    }
+
+    @Test
+    void create_shouldAllowAppointmentEndingExactlyWhenExistingAppointmentStarts() {
+        Long clientId = 1L;
+        Long artistProfileId = 1L;
+
+        LocalDate date = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(9, 0);
+
+        User client = new User();
+        client.setId(clientId);
+        client.setRole(Role.CLIENT);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(artistProfileId);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(8, 0));
+        workingSchedule.setEndTime(LocalTime.of(15, 0));
+        workingSchedule.setAvailable(true);
+
+        BeautyService beautyService = new BeautyService();
+        beautyService.setId(1L);
+        beautyService.setDuration(60);
+        beautyService.setPrice(new BigDecimal("1500.00"));
+        beautyService.setActive(true);
+
+        Appointment existingAppointment = new Appointment();
+        existingAppointment.setAppointmentStartTime(LocalTime.of(10, 0));
+        existingAppointment.setAppointmentEndTime(LocalTime.of(11, 0));
+
+        when(userService.getById(clientId)).thenReturn(client);
+        when(artistProfileService.getById(artistProfileId)).thenReturn(artistProfile);
+        when(workingScheduleService.findActiveByArtistAndDay(artistProfileId, date.getDayOfWeek())).thenReturn(workingSchedule);
+        when(beautyServiceService.getById(1L)).thenReturn(beautyService);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(artistProfileId, date)).thenReturn(List.of(existingAppointment));
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.create(
+                clientId,
+                artistProfileId,
+                date,
+                startTime,
+                List.of(1L),
+                null,
+                null
+        );
+
+        assertNotNull(result);
+        assertEquals(LocalTime.of(9, 0), result.getAppointmentStartTime());
+        assertEquals(LocalTime.of(10, 0), result.getAppointmentEndTime());
+
+        verify(appointmentRepository).save(any(Appointment.class));
+    }
+
+    @Test
+    void create_shouldRejectAppointmentOverlappingAtStart() {
+        Long clientId = 1L;
+        Long artistProfileId = 1L;
+
+        LocalDate date = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(9, 30);
+
+        User client = new User();
+        client.setId(clientId);
+        client.setRole(Role.CLIENT);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(artistProfileId);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(8, 0));
+        workingSchedule.setEndTime(LocalTime.of(15, 0));
+        workingSchedule.setAvailable(true);
+
+        BeautyService beautyService = new BeautyService();
+        beautyService.setId(1L);
+        beautyService.setDuration(60);
+        beautyService.setPrice(new BigDecimal("1500.00"));
+        beautyService.setActive(true);
+
+        Appointment existingAppointment = new Appointment();
+        existingAppointment.setAppointmentStartTime(LocalTime.of(10, 0));
+        existingAppointment.setAppointmentEndTime(LocalTime.of(11, 0));
+
+        when(userService.getById(clientId)).thenReturn(client);
+        when(artistProfileService.getById(artistProfileId)).thenReturn(artistProfile);
+        when(workingScheduleService.findActiveByArtistAndDay(artistProfileId, date.getDayOfWeek())).thenReturn(workingSchedule);
+        when(beautyServiceService.getById(1L)).thenReturn(beautyService);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(artistProfileId, date)).thenReturn(List.of(existingAppointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.create(
+                        clientId,
+                        artistProfileId,
+                        date,
+                        startTime,
+                        List.of(1L),
+                        null,
+                        null
+                )
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    void create_shouldRejectAppointmentOverlappingAtEnd() {
+        Long clientId = 1L;
+        Long artistProfileId = 1L;
+
+        LocalDate date = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(10, 30);
+
+        User client = new User();
+        client.setId(clientId);
+        client.setRole(Role.CLIENT);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(artistProfileId);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(8, 0));
+        workingSchedule.setEndTime(LocalTime.of(15, 0));
+        workingSchedule.setAvailable(true);
+
+        BeautyService beautyService = new BeautyService();
+        beautyService.setId(1L);
+        beautyService.setDuration(60);
+        beautyService.setPrice(new BigDecimal("1500.00"));
+        beautyService.setActive(true);
+
+        Appointment existingAppointment = new Appointment();
+        existingAppointment.setAppointmentStartTime(LocalTime.of(10, 0));
+        existingAppointment.setAppointmentEndTime(LocalTime.of(11, 0));
+
+        when(userService.getById(clientId)).thenReturn(client);
+        when(artistProfileService.getById(artistProfileId)).thenReturn(artistProfile);
+        when(workingScheduleService.findActiveByArtistAndDay(artistProfileId, date.getDayOfWeek())).thenReturn(workingSchedule);
+        when(beautyServiceService.getById(1L)).thenReturn(beautyService);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(artistProfileId, date)).thenReturn(List.of(existingAppointment));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> appointmentService.create(
+                        clientId,
+                        artistProfileId,
+                        date,
+                        startTime,
+                        List.of(1L),
+                        null,
+                        null
+                )
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    void create_shouldRejectAppointmentThatStartsAndEndsDuringExistingAppointment() {
+        Long clientId = 1L;
+        Long artistProfileId = 1L;
+
+        LocalDate date = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(10, 0);
+
+        User client = new User();
+        client.setId(clientId);
+        client.setRole(Role.CLIENT);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(artistProfileId);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(8, 0));
+        workingSchedule.setEndTime(LocalTime.of(15, 0));
+        workingSchedule.setAvailable(true);
+
+        BeautyService beautyService = new BeautyService();
+        beautyService.setId(1L);
+        beautyService.setDuration(60);
+        beautyService.setPrice(new BigDecimal("1500.00"));
+        beautyService.setActive(true);
+
+        Appointment existingAppointment = new Appointment();
+        existingAppointment.setAppointmentStartTime(LocalTime.of(10, 0));
+        existingAppointment.setAppointmentEndTime(LocalTime.of(11, 0));
+
+        when(userService.getById(clientId)).thenReturn(client);
+        when(artistProfileService.getById(artistProfileId)).thenReturn(artistProfile);
+        when(workingScheduleService.findActiveByArtistAndDay(artistProfileId, date.getDayOfWeek())).thenReturn(workingSchedule);
+        when(beautyServiceService.getById(1L)).thenReturn(beautyService);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(artistProfileId, date)).thenReturn(List.of(existingAppointment));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> appointmentService.create(
+                        clientId,
+                        artistProfileId,
+                        date,
+                        startTime,
+                        List.of(1L),
+                        null,
+                        null
+                )
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    void create_shouldRejectAppointmentThatOverlapsWithExistingAppointment() {
+        Long clientId = 1L;
+        Long artistProfileId = 1L;
+
+        LocalDate date = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(9, 0);
+
+        User client = new User();
+        client.setId(clientId);
+        client.setRole(Role.CLIENT);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(artistProfileId);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(8, 0));
+        workingSchedule.setEndTime(LocalTime.of(15, 0));
+        workingSchedule.setAvailable(true);
+
+        BeautyService beautyService = new BeautyService();
+        beautyService.setId(1L);
+        beautyService.setDuration(180);
+        beautyService.setPrice(new BigDecimal("5500.00"));
+        beautyService.setActive(true);
+
+        Appointment existingAppointment = new Appointment();
+        existingAppointment.setAppointmentStartTime(LocalTime.of(10, 0));
+        existingAppointment.setAppointmentEndTime(LocalTime.of(11, 0));
+
+        when(userService.getById(clientId)).thenReturn(client);
+        when(artistProfileService.getById(artistProfileId)).thenReturn(artistProfile);
+        when(workingScheduleService.findActiveByArtistAndDay(artistProfileId, date.getDayOfWeek())).thenReturn(workingSchedule);
+        when(beautyServiceService.getById(1L)).thenReturn(beautyService);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(artistProfileId, date)).thenReturn(List.of(existingAppointment));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> appointmentService.create(
+                        clientId,
+                        artistProfileId,
+                        date,
+                        startTime,
+                        List.of(1L),
+                        null,
+                        null
+                )
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    void create_shouldRejectAppointmentThatIsInsideExistingAppointment() {
+        Long clientId = 1L;
+        Long artistProfileId = 1L;
+
+        LocalDate date = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(10, 0);
+
+        User client = new User();
+        client.setId(clientId);
+        client.setRole(Role.CLIENT);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(artistProfileId);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(8, 0));
+        workingSchedule.setEndTime(LocalTime.of(15, 0));
+        workingSchedule.setAvailable(true);
+
+        BeautyService beautyService = new BeautyService();
+        beautyService.setId(1L);
+        beautyService.setDuration(60);
+        beautyService.setPrice(new BigDecimal("1500.00"));
+        beautyService.setActive(true);
+
+        Appointment existingAppointment = new Appointment();
+        existingAppointment.setAppointmentStartTime(LocalTime.of(9, 0));
+        existingAppointment.setAppointmentEndTime(LocalTime.of(12, 0));
+
+        when(userService.getById(clientId)).thenReturn(client);
+        when(artistProfileService.getById(artistProfileId)).thenReturn(artistProfile);
+        when(workingScheduleService.findActiveByArtistAndDay(artistProfileId, date.getDayOfWeek())).thenReturn(workingSchedule);
+        when(beautyServiceService.getById(1L)).thenReturn(beautyService);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(artistProfileId, date)).thenReturn(List.of(existingAppointment));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> appointmentService.create(
+                        clientId,
+                        artistProfileId,
+                        date,
+                        startTime,
+                        List.of(1L),
+                        null,
+                        null
+                )
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
 }
 
