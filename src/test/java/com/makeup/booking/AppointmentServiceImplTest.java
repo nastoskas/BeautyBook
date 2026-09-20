@@ -1304,5 +1304,50 @@ public class AppointmentServiceImplTest {
 
         verify(appointmentRepository, never()).save(any(Appointment.class));
     }
+
+    @Test
+    public void cancel_shouldRejectAlreadyCancelledAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.cancel(1L)
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    public void cancel_shouldCancelPendingAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        when(appointmentRepository.findById(1L))
+                .thenReturn(Optional.of(appointment));
+
+        when(appointmentRepository.save(any(Appointment.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        appointmentService.cancel(1L);
+
+        assertEquals(AppointmentStatus.CANCELLED, appointment.getStatus());
+
+        verify(appointmentRepository).save(appointment);
+    }
+
+    @Test
+    public void cancel_shouldRejectNonExistingAppointment() {
+        when(appointmentRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(AppointmentNotFoundException.class,
+                () -> appointmentService.cancel(999L));
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
 }
 
