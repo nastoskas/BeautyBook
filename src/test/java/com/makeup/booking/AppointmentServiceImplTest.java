@@ -3,6 +3,7 @@ package com.makeup.booking;
 import com.makeup.booking.model.*;
 import com.makeup.booking.model.enums.AppointmentStatus;
 import com.makeup.booking.model.enums.Role;
+import com.makeup.booking.model.exceptions.AppointmentNotFoundException;
 import com.makeup.booking.model.exceptions.BeautyServiceNotFoundException;
 import com.makeup.booking.repository.AppointmentRepository;
 import com.makeup.booking.service.ArtistProfileService;
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -1148,6 +1150,159 @@ public class AppointmentServiceImplTest {
         assertEquals(List.of(service1, service2), result.getBeautyServices());
 
         verify(appointmentRepository).save(any(Appointment.class));
+    }
+
+    @Test
+    public void updateStatus_shouldConfirmPendingAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.updateStatus(1L, AppointmentStatus.CONFIRMED);
+
+        assertEquals(AppointmentStatus.CONFIRMED, result.getStatus());
+
+        verify(appointmentRepository).save(appointment);
+    }
+
+    @Test
+    public void updateStatus_shouldRejectPendingAppointmentToCompleted() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.updateStatus(
+                        1L,
+                        AppointmentStatus.COMPLETED
+                )
+        );
+
+        verify(appointmentRepository, never()).save(appointment);
+    }
+
+    @Test
+    public void updateStatus_shouldCancelPendingAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        when(appointmentRepository.findById(1L))
+                .thenReturn(Optional.of(appointment));
+
+        when(appointmentRepository.save(any(Appointment.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.updateStatus(
+                1L,
+                AppointmentStatus.CANCELLED
+        );
+
+        assertEquals(AppointmentStatus.CANCELLED, result.getStatus());
+
+        verify(appointmentRepository).save(appointment);
+    }
+
+    @Test
+    public void updateStatus_shouldCompleteConfirmedAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.CONFIRMED);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.updateStatus(1L, AppointmentStatus.COMPLETED);
+
+        assertEquals(AppointmentStatus.COMPLETED, result.getStatus());
+
+        verify(appointmentRepository).save(appointment);
+    }
+
+    @Test
+    public void updateStatus_shouldCancelConfirmedAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.CONFIRMED);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.updateStatus(
+                1L,
+                AppointmentStatus.CANCELLED
+        );
+
+        assertEquals(AppointmentStatus.CANCELLED, result.getStatus());
+
+        verify(appointmentRepository).save(appointment);
+    }
+
+    @Test
+    public void updateStatus_shouldAcceptConfirmedAppointmentToNoShow() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.CONFIRMED);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.updateStatus(
+                1L,
+                AppointmentStatus.NO_SHOW
+        );
+
+        assertEquals(AppointmentStatus.NO_SHOW, result.getStatus());
+
+        verify(appointmentRepository).save(appointment);
+    }
+
+    @Test
+    public void updateStatus_shouldRejectChangingCompletedAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.COMPLETED);
+
+        when(appointmentRepository.findById(1L))
+                .thenReturn(Optional.of(appointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.updateStatus(
+                        1L,
+                        AppointmentStatus.CANCELLED
+                )
+        );
+
+        verify(appointmentRepository, never()).save(appointment);
+    }
+
+    @Test
+    public void updateStatus_shouldRejectNullStatus() {
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.updateStatus(1L, null));
+
+        verify(appointmentRepository, never()).findById(anyLong());
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    public void updateStatus_shouldRejectNonExistingAppointment() {
+        when(appointmentRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(AppointmentNotFoundException.class,
+                () -> appointmentService.updateStatus(
+                        999L,
+                        AppointmentStatus.CONFIRMED
+                ));
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
     }
 }
 
