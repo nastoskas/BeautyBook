@@ -1701,5 +1701,20 @@ public class AppointmentServiceImplTest {
 
         verify(appointmentRepository, never()).save(any(Appointment.class));
     }
+
+    @Test
+    public void getById_shouldReturnAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        Appointment result = appointmentService.getById(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+
+        verify(appointmentRepository).findById(1L);
+    }
 }
 
