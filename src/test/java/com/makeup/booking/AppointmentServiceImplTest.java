@@ -1349,5 +1349,301 @@ public class AppointmentServiceImplTest {
 
         verify(appointmentRepository, never()).save(any(Appointment.class));
     }
+
+    @Test
+    public void reschedule_shouldRescheduleAppointmentSuccessfully() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(10L);
+        appointment.setArtistProfile(artistProfile);
+
+        BeautyService beautyService = new BeautyService();
+        beautyService.setDuration(120);
+
+        appointment.setBeautyServices(List.of(beautyService));
+
+        LocalDate newDate = LocalDate.now().plusDays(1);
+        LocalTime newStartTime = LocalTime.of(12, 0);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(8, 0));
+        workingSchedule.setEndTime(LocalTime.of(17, 0));
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(workingScheduleService.findActiveByArtistAndDay(10L, newDate.getDayOfWeek())).thenReturn(workingSchedule);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(10L, newDate)).thenReturn(List.of());
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.reschedule(1L, newDate, newStartTime);
+
+        assertEquals(newDate, result.getAppointmentDate());
+        assertEquals(newStartTime, result.getAppointmentStartTime());
+        assertEquals(LocalTime.of(14, 0), result.getAppointmentEndTime());
+
+        verify(appointmentRepository).save(appointment);
+    }
+
+    @Test
+    public void reschedule_shouldRejectNullDateOrTime() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        null,
+                        LocalTime.of(10, 0)
+                )
+        );
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        LocalDate.now().plusDays(1),
+                        null
+                )
+        );
+    }
+
+    @Test
+    public void reschedule_shouldRejectCancelledAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        LocalDate.now().plusDays(1),
+                        LocalTime.of(10, 0)
+                )
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    public void reschedule_shouldRejectCompletedAppointment() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.COMPLETED);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        LocalDate.now().plusDays(1),
+                        LocalTime.of(10, 0)
+                )
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    public void reschedule_shouldRejectPastDate() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        LocalDate.now().minusDays(1),
+                        LocalTime.of(10, 0)
+                ));
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    public void reschedule_shouldRejectPastTimeToday() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        when(appointmentRepository.findById(1L))
+                .thenReturn(Optional.of(appointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        LocalDate.now(),
+                        LocalTime.now().minusMinutes(1)
+                ));
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    public void reschedule_shouldRejectWhenArtistDoesNotWorkThatDay() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(10L);
+        appointment.setArtistProfile(artistProfile);
+
+        LocalDate newDate = LocalDate.now().plusDays(1);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(null);
+        workingSchedule.setEndTime(null);
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        when(workingScheduleService.findActiveByArtistAndDay(10L, newDate.getDayOfWeek())).thenReturn(workingSchedule);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        newDate,
+                        LocalTime.of(10, 0)
+                ));
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    public void reschedule_shouldRejectAppointmentOutsideWorkingHours() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(10L);
+        appointment.setArtistProfile(artistProfile);
+
+        BeautyService service = new BeautyService();
+        service.setDuration(120);
+        appointment.setBeautyServices(List.of(service));
+
+        LocalDate newDate = LocalDate.now().plusDays(1);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(9, 0));
+        workingSchedule.setEndTime(LocalTime.of(17, 0));
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        when(workingScheduleService.findActiveByArtistAndDay(10L, newDate.getDayOfWeek())).thenReturn(workingSchedule);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        newDate,
+                        LocalTime.of(8, 0)
+                ));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        newDate,
+                        LocalTime.of(16, 0)
+                ));
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    public void reschedule_shouldRejectAppointmentThatOverlapsWithExisting() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(10L);
+
+        appointment.setArtistProfile(artistProfile);
+
+        BeautyService service = new BeautyService();
+        service.setDuration(60);
+        appointment.setBeautyServices(List.of(service));
+
+        LocalDate newDate = LocalDate.now().plusDays(1);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(9, 0));
+        workingSchedule.setEndTime(LocalTime.of(17, 0));
+
+        Appointment existingAppointment = new Appointment();
+        existingAppointment.setId(2L);
+        existingAppointment.setAppointmentDate(newDate);
+        existingAppointment.setAppointmentStartTime(LocalTime.of(10, 0));
+        existingAppointment.setAppointmentEndTime(LocalTime.of(11, 0));
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(workingScheduleService.findActiveByArtistAndDay(10L, newDate.getDayOfWeek())).thenReturn(workingSchedule);
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(10L, newDate)).thenReturn(List.of(existingAppointment));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> appointmentService.reschedule(
+                        1L,
+                        newDate,
+                        LocalTime.of(10, 30)
+                )
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    public void reschedule_shouldIgnoreTheSameAppointmentWhenCheckingOverlap() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        ArtistProfile artistProfile = new ArtistProfile();
+        artistProfile.setId(10L);
+        appointment.setArtistProfile(artistProfile);
+
+        BeautyService service = new BeautyService();
+        service.setDuration(60);
+        appointment.setBeautyServices(List.of(service));
+
+        LocalDate newDate = LocalDate.now().plusDays(1);
+        LocalTime newStartTime = LocalTime.of(10, 0);
+
+        WorkingSchedule workingSchedule = new WorkingSchedule();
+        workingSchedule.setStartTime(LocalTime.of(9, 0));
+        workingSchedule.setEndTime(LocalTime.of(17, 0));
+
+        Appointment sameAppointment = new Appointment();
+        sameAppointment.setId(1L);
+        sameAppointment.setAppointmentStartTime(LocalTime.of(10, 0));
+        sameAppointment.setAppointmentEndTime(LocalTime.of(11, 0));
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        when(workingScheduleService.findActiveByArtistAndDay(10L, newDate.getDayOfWeek())).thenReturn(workingSchedule);
+
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(10L, newDate)).thenReturn(List.of(sameAppointment));
+
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.reschedule(
+                1L,
+                newDate,
+                newStartTime
+        );
+
+        assertEquals(newDate, result.getAppointmentDate());
+        assertEquals(newStartTime, result.getAppointmentStartTime());
+        assertEquals(LocalTime.of(11, 0), result.getAppointmentEndTime());
+
+        verify(appointmentRepository).save(appointment);
+    }
 }
 
