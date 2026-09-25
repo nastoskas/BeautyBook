@@ -1672,5 +1672,34 @@ public class AppointmentServiceImplTest {
 
         verify(appointmentRepository, never()).save(any(Appointment.class));
     }
+
+    @Test
+    public void updateInspirationImage_shouldUpdateImageSuccessfully() {
+        Appointment appointment = new Appointment();
+        appointment.setId(1L);
+        appointment.setInspirationImagePath("old-image.jpg");
+
+        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Appointment result = appointmentService.updateInspirationImage(1L, "new-image.jpg");
+
+        assertEquals("new-image.jpg", result.getInspirationImagePath());
+
+        verify(appointmentRepository).save(appointment);
+    }
+
+    @Test
+    public void updateInspirationImage_shouldRejectNonExistingAppointment() {
+        when(appointmentRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(
+                AppointmentNotFoundException.class,
+                () -> appointmentService.updateInspirationImage(999L, "new-image.jpg")
+        );
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
 }
 
