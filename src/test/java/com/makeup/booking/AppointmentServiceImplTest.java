@@ -1716,5 +1716,17 @@ public class AppointmentServiceImplTest {
 
         verify(appointmentRepository).findById(1L);
     }
+
+    @Test
+    public void getById_shouldThrowExceptionWhenAppointmentDoesNotExist() {
+        when(appointmentRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(
+                AppointmentNotFoundException.class,
+                () -> appointmentService.getById(999L)
+        );
+
+        verify(appointmentRepository).findById(999L);
+    }
 }
 
