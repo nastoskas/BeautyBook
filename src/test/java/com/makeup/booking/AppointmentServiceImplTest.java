@@ -1728,5 +1728,19 @@ public class AppointmentServiceImplTest {
 
         verify(appointmentRepository).findById(999L);
     }
+
+    @Test
+    public void findAll_shouldReturnAllAppointments() {
+        Appointment a1 = new Appointment();
+        Appointment a2 = new Appointment();
+
+        when(appointmentRepository.findAll()).thenReturn(List.of(a1, a2));
+
+        List<Appointment> result = appointmentService.findAll();
+
+        assertEquals(2, result.size());
+
+        verify(appointmentRepository).findAll();
+    }
 }
 
