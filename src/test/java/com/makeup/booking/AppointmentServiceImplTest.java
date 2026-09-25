@@ -1742,5 +1742,19 @@ public class AppointmentServiceImplTest {
 
         verify(appointmentRepository).findAll();
     }
+
+    @Test
+    public void findByArtist_shouldReturnArtistAppointments() {
+        Appointment a1 = new Appointment();
+        Appointment a2 = new Appointment();
+
+        when(appointmentRepository.findByArtistProfileId(1L)).thenReturn(List.of(a1, a2));
+
+        List<Appointment> result = appointmentService.findByArtist(1L);
+
+        assertEquals(2, result.size());
+
+        verify(appointmentRepository).findByArtistProfileId(1L);
+    }
 }
 
