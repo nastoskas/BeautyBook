@@ -16,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.cglib.core.Local;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -1769,6 +1768,22 @@ public class AppointmentServiceImplTest {
         assertEquals(2, result.size());
 
         verify(appointmentRepository).findByClientId(1L);
+    }
+
+    @Test
+    public void findByArtistAndDate_shouldReturnAppointmentsForArtistAndDate() {
+        LocalDate date = LocalDate.of(2026, 10, 10);
+
+        Appointment a1 = new Appointment();
+        Appointment a2 = new Appointment();
+
+        when(appointmentRepository.findByArtistProfileIdAndAppointmentDate(1L, date)).thenReturn(List.of(a1, a2));
+
+        List<Appointment> result = appointmentService.findByArtistAndDate(1L, date);
+
+        assertEquals(2, result.size());
+
+        verify(appointmentRepository).findByArtistProfileIdAndAppointmentDate(1L, date);
     }
 }
 
