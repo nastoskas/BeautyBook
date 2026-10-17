@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,6 +55,21 @@ class WorkingScheduleServiceImplTest {
                 () -> workingScheduleService.getById(1L));
 
         verify(workingScheduleRepository).findById(1L);
+    }
+
+    @Test
+    public void findByArtist_ShouldReturnArtistWorkingSchedules() {
+        WorkingSchedule workingSchedule1 = new WorkingSchedule();
+        workingSchedule1.setId(1L);
+        WorkingSchedule workingSchedule2 = new WorkingSchedule();
+        workingSchedule2.setId(2L);
+        Long artistProfileId = 1L;
+        when(workingScheduleRepository.findByArtistProfileId(artistProfileId)).thenReturn(List.of(workingSchedule1, workingSchedule2));
+
+        List<WorkingSchedule> result = workingScheduleService.findByArtist(artistProfileId);
+
+        assertEquals(2, result.size());
+        verify(workingScheduleRepository).findByArtistProfileId(artistProfileId);
     }
 
 
