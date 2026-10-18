@@ -8,6 +8,7 @@ import com.makeup.booking.repository.UserRepository;
 import com.makeup.booking.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public User findByEmail(String email) {
@@ -41,7 +43,26 @@ public class UserServiceImpl implements UserService {
         if(firstName == null || firstName.isBlank() || lastName == null || lastName.isBlank() || email == null || email.isBlank() || password == null || password.isBlank()) {
             throw new IllegalArgumentException("User information is incomplete");
         }
-        User user = new User(firstName, lastName, email, password, phoneNumber, profileImage, true, role);
+
+        if (existsByEmail(email)) {
+            throw new UserAlreadyExistsException(
+                    "User with email " + email + " already exists"
+            );
+        }
+
+        String encodedPassword = passwordEncoder.encode(password);
+
+        User user = new User(
+                firstName,
+                lastName,
+                email,
+                encodedPassword,
+                phoneNumber,
+                profileImage,
+                true,
+                role
+        );
+
         return userRepository.save(user);
     }
 
@@ -82,9 +103,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean existsByEmail(String email) {
-        if (userRepository.existsByEmail(email)){
-            throw new UserAlreadyExistsException("User with email " + email + " already exists");
-        }
-        return false;
+        return userRepository.existsByEmail(email);
     }
 }
